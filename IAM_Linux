@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# This script is an example of an identity and access management program for Linux
+
+# Require root privileges
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 
+   exit 1
+fi
+
+# Set up user accounts
+echo "Please enter the username of the new user: "
+read username
+echo "Please enter the user's full name: "
+read fullname
+echo "Please enter the user's password: "
+read -s password
+
+# Create the user
+useradd -m -c "$fullname" -p $password $username
+
+# Set up permissions
+echo "Please enter the group that the user should be added to: "
+read groupname
+usermod -a -G $groupname $username
+
+# Set up access control
+echo "Please enter the directory that the user should be allowed to access: "
+read dirname
+chown -R $username:$groupname $dirname
+chmod g+rwx $dirname
+setfacl -m "u:$username:rwx" $dirname
+
+# Set up login restrictions
+echo "Please enter the time of day that the user should not be able to login: "
+read logintime
+echo "$username:$logintime" >> /etc/security/time.conf
+
+echo "The user $username has been successfully set up."
